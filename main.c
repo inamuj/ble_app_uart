@@ -21,6 +21,10 @@
  * This application uses the @ref srvlib_conn_params module.
  */
 
+#define LED_5 2
+#define LED_6 3
+
+
 #include <stdint.h>
 #include <stdbool.h>
 #include <string.h>
@@ -39,7 +43,6 @@
 #include "app_util_platform.h"
 #include "bsp.h"
 #include "boards.h"
-#include "nrf_delay.h"
 #define IS_SRVC_CHANGED_CHARACT_PRESENT 0                                           /**< Include the service_changed characteristic. If not enabled, the server's database cannot be changed for the lifetime of the device. */
 
 #define WAKEUP_BUTTON_ID                0                                           /**< Button used to wake up the application. */
@@ -138,7 +141,6 @@ static void gap_params_init(void)
  */
 static void advertising_init(void)
 {
-	printf("adv");
     uint32_t      err_code;
     ble_advdata_t advdata;
     ble_advdata_t scanrsp;
@@ -172,16 +174,17 @@ static void advertising_init(void)
 /**@snippet [Handling the data received over BLE] */
 static void nus_data_handler(ble_nus_t * p_nus, uint8_t * p_data, uint16_t length)
 {
+/*
     for (uint32_t i = 0; i < length; i++)
     {
 			//printf("adv1");
         while(app_uart_put(p_data[i]) != NRF_SUCCESS);
     }
     while(app_uart_put('\n') != NRF_SUCCESS);
-		
+		*/
 		if(p_data[0]=='1'){
-		nrf_gpio_pin_set(LED_4);
-		nrf_gpio_pin_clear(LED_3);
+		nrf_gpio_pin_set(LED_6);
+		nrf_gpio_pin_clear(LED_5);
 		}
 		
 		if(p_data[0]=='2'){
@@ -195,15 +198,18 @@ static void nus_data_handler(ble_nus_t * p_nus, uint8_t * p_data, uint16_t lengt
 		}
 		
 		if(p_data[0]=='4'){
-		nrf_gpio_pin_set(LED_3);
-		nrf_gpio_pin_clear(LED_4);
+		nrf_gpio_pin_set(LED_5);
+		nrf_gpio_pin_clear(LED_6);
 		}
 		
 		if(p_data[0]=='5'){
 		nrf_gpio_pin_clear(LED_1);
 		nrf_gpio_pin_clear(LED_2);
-		nrf_gpio_pin_clear(LED_3);
-		nrf_gpio_pin_clear(LED_4);
+		}
+
+		if(p_data[0]=='6'){
+		nrf_gpio_pin_clear(LED_5);
+		nrf_gpio_pin_clear(LED_6);
 		}
 }
 /**@snippet [Handling the data received over BLE] */
@@ -519,6 +525,7 @@ static void uart_init(void)
     APP_ERROR_CHECK(err_code);
 }
 /**@snippet [UART Initialization] */
+/*
 uint8_t simple_uart_get(void)
 {
   while (NRF_UART0->EVENTS_RXDRDY != 1)
@@ -530,25 +537,20 @@ uint8_t simple_uart_get(void)
   NRF_UART0->EVENTS_RXDRDY = 0;
   return (uint8_t)NRF_UART0->RXD;
 }
-
+*/
 
 void init_leds()
 {
     nrf_gpio_cfg_output(LED_1);
     nrf_gpio_cfg_output(LED_2);
-    nrf_gpio_cfg_output(LED_3);
-    nrf_gpio_cfg_output(LED_4);
-    nrf_gpio_pin_set(LED_1);
-    nrf_gpio_pin_set(LED_2);
-    nrf_gpio_pin_set(LED_3);
-    nrf_gpio_pin_set(LED_4);
+    nrf_gpio_cfg_output(LED_5);
+    nrf_gpio_cfg_output(LED_6);
 }	
 /**@brief  Application main function.
  */
 int main(void)
 {
-	printf("main");
-	//init_leds();
+	//printf("main");
     uint8_t start_string[] = START_STRING;
     uint32_t err_code;
     
@@ -556,7 +558,7 @@ int main(void)
     APP_TIMER_INIT(APP_TIMER_PRESCALER, APP_TIMER_MAX_TIMERS, APP_TIMER_OP_QUEUE_SIZE, false);
     APP_GPIOTE_INIT(APP_GPIOTE_MAX_USERS);
     ble_stack_init();
-    uart_init();
+    //uart_init();
     err_code = bsp_init(BSP_INIT_LED | BSP_INIT_BUTTONS,
                         APP_TIMER_TICKS(100, APP_TIMER_PRESCALER),
                         NULL);
@@ -571,12 +573,12 @@ int main(void)
     
     printf("%s",start_string);
     advertising_start();
+		
+		init_leds();
+	
+		
     for (;;)
     {
         power_manage();
+		}
 }
-}
-
-/** 
- * @}
- */
